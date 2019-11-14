@@ -38,13 +38,16 @@
             <Layout :style="{padding: '0 50px'}">  
                 <Breadcrumb :style="{margin: '16px 0'}">
                     <BreadcrumbItem>Home</BreadcrumbItem>
-                    <BreadcrumbItem>Items</BreadcrumbItem>
-                    <Icon type="md-cart" size=24 style="float: right; margin-right:10%;" @click="showCart" />
+                    <BreadcrumbItem @click="showItems">Items</BreadcrumbItem>
+                     <Button  type="primary" v-show="cart === true" style="float: right; margin-right:8%" @click="clearCart">Clear Cart</Button>
+                    <Button  type="primary" v-show="cart === true" style="float: right; margin-right:1%" @click="showItems">Back to Items</Button>
+                    <Icon type="md-cart" size=24 style="float: right; margin-right:1%;" @click="showCart" />
+                    
                 </Breadcrumb>
                 
                 
                 <Content :style="{padding: '24px 0', minHeight: '500px', background: '#fff'}">
-                    <Layout>
+                    <Layout v-show="cart === false">
                         <Content :style="{padding: '24px', minHeight: '500px', background: '#fff'}">
                           <Row style="background:#eee;padding:20px">
                             <Col v-for="key in items" :key="key.itemName" span="6" offset="2">
@@ -55,7 +58,28 @@
                                     <Button  type="primary" style="margin-top: 10px;" @click="addToCart(key)">Add to cart</Button>
                                 </Card>
                             </Col>
-                        </Row>
+                          </Row>
+                        </Content>
+                    </Layout>
+                    <Layout v-show="cart === true">
+                      <Content  :style="{padding: '24px', minHeight: '500px', background: '#fff'}">
+                          <List item-layout="vertical">
+                  <ListItem v-for="item in carItems" :key="item.itemName">
+                      <ListItemMeta :title="item.itemName" :description="item.Number" />
+                      {{ item.content }}
+                      <template slot="action">
+                          <li>
+                              <Icon type="ios-star-outline" /> 123
+                          </li>
+                          <li>
+                              <Icon type="ios-thumbs-up-outline" /> 234
+                          </li>
+                          <li>
+                              <Icon type="ios-chatbubbles-outline" /> 345
+                          </li>
+                      </template> 
+                  </ListItem>
+              </List>
                         </Content>
                     </Layout>
                 </Content>
@@ -76,12 +100,88 @@ export default {
   data(){
     return{
       items: [],
-      selectedItem: ''
+      selectedItem: '',
+      cart: false,
+      carItems: []
     }
   },
   methods: {
-    showCart(){
+    clearCart(){
+       axios({
+        method:'delete',
+        url: 'http://3.85.235.191/v1/cart'
+        }).then((response) => {
+          console.log(response)
+          this.showCart()
+        }).catch((err) => {
+          console.log(err)
+        })
+    },
+    showCart: async function(){
       console.log("Called")
+      this.carItems = []
+      this.cart = true
+      axios({
+      method:'get',
+      url: 'http://3.85.235.191/v1/cart'
+      
+      }).then((response) => {
+        console.log("Cart", response.data)
+        for(let key in response.data){
+          if(response.data.hasOwnProperty(key)){
+            let jsonObject =  {
+              "itemName": key,
+              "Number": response.data[key]
+            }
+            this.carItems.push(jsonObject)
+          }
+        }
+        axios({
+        method:'get',
+        url: 'http://3.85.235.191/v1/cart'
+        
+        }).then((res) => {
+          console.log("Cart", res.data)
+          for(let key in res.data){
+            if(res.data.hasOwnProperty(key)){
+              let jsonObject =  {
+                "itemName": key,
+                "Number": res.data[key]
+              }
+              this.carItems.push(jsonObject)
+            }
+          }
+          axios({
+          method:'get',
+          url: 'http://3.85.235.191/v1/cart'
+          
+          }).then((result) => {
+            console.log("Cart", result.data)
+            for(let key in result.data){
+            if(result.data.hasOwnProperty(key)){
+              let jsonObject =  {
+                "itemName": key,
+                "Number": result.data[key]
+              }
+              this.carItems.push(jsonObject)
+            }
+          }
+          console.log(this.carItems)
+            
+          }).catch((err) => {
+            console.log(err)
+          })
+        }).catch((err) => {
+          console.log(err)
+        })
+      }).catch((err) => {
+        console.log(err)
+      })
+
+    },
+    showItems()
+    {
+      this.cart = false
     },
     addToCart(key){
       console.log(key.itemName)
